@@ -69,7 +69,10 @@ contract SkillBond is ERC721, Ownable {
     event TaskCompleted(uint256 indexed taskId, address indexed agent, uint256 rating);
     event TierUpgraded(address indexed agent, Tier newTier);
     
-    constructor(address _usdcAddress, address _erc8004Address) ERC721("AgentReputation", "AGTRT") {
+    constructor(address _usdcAddress, address _erc8004Address) 
+        ERC721("AgentReputation", "AGTRT") 
+        Ownable(msg.sender) 
+    {
         usdc = IERC20(_usdcAddress);
         erc8004 = IERC8004(_erc8004Address);
         

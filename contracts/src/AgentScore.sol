@@ -44,7 +44,7 @@ contract AgentScore is Ownable {
     event LoanRepaid(address indexed agent, uint256 amount);
     event CreditLimitUpdated(address indexed agent, uint256 newLimit);
     
-    constructor(address _usdcAddress, address _erc8004Address) {
+    constructor(address _usdcAddress, address _erc8004Address) Ownable(msg.sender) {
         usdc = IERC20(_usdcAddress);
         erc8004Registry = IERC8004Registry(_erc8004Address);
     }

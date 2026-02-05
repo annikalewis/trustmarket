@@ -1,179 +1,117 @@
 /**
- * Autonomous Demo Agent for AgentScore + SkillBond
- * 
- * This agent:
- * 1. Registers on AgentScore (gets initial credit)
- * 2. Stakes USDC on SkillBond (unlocks premium tasks)
- * 3. Autonomously accepts and completes tasks
- * 4. Builds reputation on ERC-8004
- * 5. Posts updates to X/Farcaster
+ * Autonomous Agent: Task polling + execution loop
+ * Runs continuously, polling for work and completing tasks
  */
 
-const { ethers } = require('ethers');
-const axios = require('axios');
-require('dotenv').config();
+const axios = require('axios')
+require('dotenv').config()
+const TaskWorker = require('./src/worker')
 
-// Configuration
-const CONFIG = {
-  RPC_URL: process.env.BASE_SEPOLIA_RPC || 'https://sepolia.base.org',
-  API_URL: process.env.API_URL || 'http://localhost:3001',
-  AGENT_PRIVATE_KEY: process.env.AGENT_PRIVATE_KEY || '0x...',
-  POLL_INTERVAL: 30000, // Check for tasks every 30 seconds
-  X_API_KEY: process.env.X_API_KEY,
-};
+const API_URL = process.env.API_URL || 'http://localhost:3001'
+const AGENT_ADDRESS = process.env.AGENT_ADDRESS || '0xf94b361a541301f572c1f832e5afbda4731e864f'
+const POLL_INTERVAL = 30000 // 30 seconds
 
 class AutonomousAgent {
   constructor() {
-    this.provider = new ethers.JsonRpcProvider(CONFIG.RPC_URL);
-    this.wallet = new ethers.Wallet(CONFIG.AGENT_PRIVATE_KEY, this.provider);
-    this.address = this.wallet.address;
-    this.completedTasks = 0;
-    this.totalEarnings = 0;
+    this.address = AGENT_ADDRESS
+    this.worker = new TaskWorker()
+    this.lastCheck = null
+    this.isRunning = false
   }
 
   async initialize() {
-    console.log(`🤖 Agent initialized at ${this.address}`);
-    
-    // Register on AgentScore
-    try {
-      const registerRes = await axios.post(`${CONFIG.API_URL}/agents/register`, {
-        agentAddress: this.address,
-        initialReputation: 50,
-      });
-      console.log(`✅ ${registerRes.data.message}`);
-    } catch (error) {
-      console.error('Registration error:', error.message);
-    }
+    console.log(`\n🤖 Agent initialized at ${this.address}`)
+    console.log(`📡 API: ${API_URL}`)
+    console.log(`⏰ Poll interval: ${POLL_INTERVAL / 1000}s`)
+    console.log(`🚀 Starting autonomous loop...\n`)
   }
 
-  async startPolling() {
-    console.log(`⏰ Starting task polling (every ${CONFIG.POLL_INTERVAL / 1000}s)`);
-    
-    setInterval(() => this.pollForTasks(), CONFIG.POLL_INTERVAL);
-    
-    // Poll immediately
-    await this.pollForTasks();
-  }
-
-  async pollForTasks() {
+  async pollForWork() {
     try {
-      // Get agent status
-      const agentRes = await axios.get(`${CONFIG.API_URL}/agents/${this.address}`);
-      const agent = agentRes.data;
+      // Get available tasks for this agent
+      const res = await axios.get(`${API_URL}/tasks?agent=${this.address}`)
+      const tasks = res.data.tasks || []
 
-      // Get available tasks
-      const tasksRes = await axios.get(`${CONFIG.API_URL}/tasks`, {
-        params: { tier: agent.tier }
-      });
-
-      if (tasksRes.data.tasks.length === 0) {
-        console.log('No tasks available');
-        return;
+      if (tasks.length === 0) {
+        console.log(`[${new Date().toLocaleTimeString()}] 📭 No tasks available`)
+        return
       }
 
-      // Accept first available task
-      const task = tasksRes.data.tasks[0];
-      console.log(`📋 Found task: ${task.description} (${task.payout})`);
+      console.log(`[${new Date().toLocaleTimeString()}] 📋 Found ${tasks.length} task(s)`)
 
-      await this.acceptTask(task.id);
-      await this.completeTask(task.id);
+      // Take first task
+      const task = tasks[0]
+      console.log(`   → ${task.description} (${task.payoutAmount} USDC)`)
+
+      // Accept task
+      try {
+        await axios.post(`${API_URL}/tasks/${task.id}/accept`, {
+          agentAddress: this.address
+        })
+        console.log(`   ✅ Accepted`)
+      } catch (err) {
+        console.log(`   ⚠️  Accept failed: ${err.message}`)
+        return
+      }
+
+      // Execute task
+      console.log(`   ⚙️  Executing...`)
+      const result = await this.worker.completeTask(task)
+
+      // Mark complete
+      try {
+        await axios.post(`${API_URL}/tasks/${task.id}/complete`, {
+          rating: result.rating
+        })
+        console.log(`   ✅ Completed (${result.rating}/100)`)
+      } catch (err) {
+        console.log(`   ⚠️  Completion failed: ${err.message}`)
+        return
+      }
+
+      // Post to X (simulated)
+      await this.postToX(`Task complete! Earned ${result.earnings} USDC 💰 Total: ${result.totalEarnings} USDC`)
+
+      // Log stats
+      const stats = this.worker.getStats()
+      console.log(`   📊 Stats: ${stats.completedTasks} tasks, ${stats.totalEarnings} USDC earned\n`)
+
     } catch (error) {
-      console.error('Poll error:', error.message);
-    }
-  }
-
-  async acceptTask(taskId) {
-    try {
-      const res = await axios.post(`${CONFIG.API_URL}/tasks/${taskId}/accept`, {
-        agentAddress: this.address,
-      });
-      console.log(`✅ ${res.data.message}`);
-    } catch (error) {
-      console.error('Accept task error:', error.message);
-    }
-  }
-
-  async completeTask(taskId) {
-    try {
-      // Simulate task execution
-      const rating = 90 + Math.floor(Math.random() * 10); // 90-100 rating
-      
-      const res = await axios.post(`${CONFIG.API_URL}/tasks/${taskId}/complete`, {
-        rating,
-      });
-
-      this.completedTasks++;
-      this.totalEarnings += 1.5; // Mock earning
-
-      console.log(`🎉 ${res.data.message}`);
-      console.log(`   Total tasks: ${this.completedTasks}, Earnings: $${this.totalEarnings.toFixed(2)}`);
-
-      // Post update to X
-      await this.postToX(`Just completed a task! Rating: ${rating}/100. Total earnings: ${this.totalEarnings.toFixed(2)} USDC 💰`);
-    } catch (error) {
-      console.error('Complete task error:', error.message);
+      console.error(`❌ Poll error: ${error.message}`)
     }
   }
 
   async postToX(message) {
-    if (!CONFIG.X_API_KEY) {
-      console.log(`(Would post to X: "${message}")`);
-      return;
-    }
-
-    try {
-      // TODO: Implement X API integration
-      console.log(`📢 Posted to X: "${message}"`);
-    } catch (error) {
-      console.error('X post error:', error.message);
-    }
+    // In production, would use Twitter API
+    // For now, just log
+    const timestamp = new Date().toLocaleTimeString()
+    console.log(`   📢 [Would post to X] "${message}"`)
   }
 
-  async stakForPremium() {
-    try {
-      const res = await axios.post(`${CONFIG.API_URL}/agents/${this.address}/stake`, {
-        tier: 'PREMIUM',
-      });
-      console.log(`💎 ${res.data.message}`);
-    } catch (error) {
-      console.error('Stake error:', error.message);
-    }
-  }
+  async start() {
+    await this.initialize()
+    this.isRunning = true
 
-  async borrowCredit(amount) {
-    try {
-      const res = await axios.post(`${CONFIG.API_URL}/agents/${this.address}/borrow`, {
-        amount,
-      });
-      console.log(`💵 ${res.data.message}`);
-    } catch (error) {
-      console.error('Borrow error:', error.message);
-    }
-  }
+    // Initial poll
+    await this.pollForWork()
 
-  async getStatus() {
-    try {
-      const res = await axios.get(`${CONFIG.API_URL}/agents/${this.address}`);
-      console.log('\n📊 Agent Status:');
-      console.log(JSON.stringify(res.data, null, 2));
-    } catch (error) {
-      console.error('Status error:', error.message);
-    }
+    // Set up recurring polls
+    this.pollInterval = setInterval(() => {
+      this.pollForWork()
+    }, POLL_INTERVAL)
+
+    // Keep process alive
+    process.on('SIGINT', () => {
+      console.log('\n\n📊 Final Stats:')
+      const stats = this.worker.getStats()
+      console.log(`   Tasks Completed: ${stats.completedTasks}`)
+      console.log(`   Total Earnings: ${stats.totalEarnings} USDC`)
+      console.log(`   Average Rating: ${stats.averageRating}/100`)
+      process.exit(0)
+    })
   }
 }
 
 // Main
-(async () => {
-  const agent = new AutonomousAgent();
-  await agent.initialize();
-  await agent.getStatus();
-  await agent.startPolling();
-
-  // Optional: stake for premium
-  // await agent.stakForPremium();
-
-  // Optional: borrow some credit
-  // await agent.borrowCredit(2);
-
-  console.log('\n🚀 Agent is running. Press Ctrl+C to stop.');
-})();
+const agent = new AutonomousAgent()
+agent.start()

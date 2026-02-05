@@ -1,9 +1,48 @@
 import Head from 'next/head'
 import { useState, useEffect } from 'react'
+import { useAgent, useTiers } from '../hooks/useAgent'
 
 export default function Home() {
   const [connected, setConnected] = useState(false)
-  const [agent, setAgent] = useState(null)
+  const [agentAddress, setAgentAddress] = useState(null)
+  const { status, loading, error } = useAgent(agentAddress)
+  const { tiers } = useTiers()
+
+  useEffect(() => {
+    // Check if wallet is already connected
+    const checkWallet = async () => {
+      if (typeof window !== 'undefined' && window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' })
+          if (accounts.length > 0) {
+            setConnected(true)
+            setAgentAddress(accounts[0])
+          }
+        } catch (err) {
+          console.error('Error checking wallet:', err)
+        }
+      }
+    }
+    checkWallet()
+  }, [])
+
+  const connectWallet = async () => {
+    if (typeof window !== 'undefined' && window.ethereum) {
+      try {
+        const accounts = await window.ethereum.request({
+          method: 'eth_requestAccounts'
+        })
+        if (accounts.length > 0) {
+          setConnected(true)
+          setAgentAddress(accounts[0])
+        }
+      } catch (err) {
+        console.error('Error connecting wallet:', err)
+      }
+    } else {
+      alert('Please install MetaMask or Coinbase Wallet')
+    }
+  }
 
   return (
     <>
@@ -21,10 +60,14 @@ export default function Home() {
               <h1 className="text-xl font-bold text-white">AgentScore + SkillBond</h1>
             </div>
             <button 
-              onClick={() => setConnected(!connected)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
+              onClick={connectWallet}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                connected 
+                  ? 'bg-green-600 hover:bg-green-700 text-white' 
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
+              }`}
             >
-              {connected ? '✓ Connected' : 'Connect Wallet'}
+              {connected ? `✓ Connected: ${agentAddress?.slice(0, 6)}...${agentAddress?.slice(-4)}` : 'Connect Wallet'}
             </button>
           </div>
         </nav>
@@ -38,71 +81,118 @@ export default function Home() {
             <p className="text-xl text-slate-300 mb-8">
               Agents stake USDC. Agents earn reputation. Agents get richer.
             </p>
-            <div className="flex gap-4 justify-center">
-              <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
-                Register Agent
+            {!connected && (
+              <button 
+                onClick={connectWallet}
+                className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition"
+              >
+                Connect Wallet to Get Started
               </button>
-              <button className="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition">
-                Browse Tasks
-              </button>
-            </div>
+            )}
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-            {[
-              { label: 'Agents', value: '0', color: 'blue' },
-              { label: 'Tasks Posted', value: '0', color: 'green' },
-              { label: 'USDC Staked', value: '$0', color: 'purple' },
-              { label: 'Tasks Completed', value: '0', color: 'orange' },
-            ].map((stat, i) => (
-              <div key={i} className="bg-slate-700 bg-opacity-50 border border-slate-600 rounded-lg p-6">
-                <div className={`text-sm text-${stat.color}-400 mb-2`}>{stat.label}</div>
-                <div className="text-3xl font-bold text-white">{stat.value}</div>
-              </div>
-            ))}
-          </div>
+          {connected && agentAddress && (
+            <>
+              {/* Agent Status Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+                {/* Agent Info */}
+                <div className="lg:col-span-2 bg-slate-700 bg-opacity-50 border border-slate-600 rounded-lg p-8">
+                  <h3 className="text-lg font-bold text-white mb-6">Your Agent Status</h3>
+                  
+                  {loading && <p className="text-slate-300">Loading...</p>}
+                  {error && <p className="text-red-400">Error: {error}</p>}
+                  
+                  {status && (
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center p-3 bg-slate-800 rounded">
+                        <span className="text-slate-300">Address</span>
+                        <span className="text-white font-mono text-sm">{agentAddress?.slice(0, 10)}...{agentAddress?.slice(-8)}</span>
+                      </div>
 
-          {/* Dashboard Sections */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* My Agent Status */}
-            <div className="bg-slate-700 bg-opacity-50 border border-slate-600 rounded-lg p-8">
-              <h3 className="text-lg font-bold text-white mb-6">Your Agent Status</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center p-3 bg-slate-800 rounded">
-                  <span className="text-slate-300">Tier</span>
-                  <span className="text-white font-semibold">-</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-slate-800 rounded">
-                  <span className="text-slate-300">Credit Available</span>
-                  <span className="text-white font-semibold">-</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-slate-800 rounded">
-                  <span className="text-slate-300">Reputation</span>
-                  <span className="text-white font-semibold">-</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-slate-800 rounded">
-                  <span className="text-slate-300">Tasks Completed</span>
-                  <span className="text-white font-semibold">-</span>
-                </div>
-              </div>
-            </div>
+                      {/* AgentScore Section */}
+                      <div className="border-t border-slate-600 pt-4">
+                        <h4 className="text-sm font-semibold text-blue-400 mb-3">AgentScore (Credit)</h4>
+                        <div className="flex justify-between items-center p-3 bg-slate-800 rounded mb-2">
+                          <span className="text-slate-300">Credit Limit</span>
+                          <span className="text-white font-bold">{status.agentScore?.creditLimit || '0'} USDC</span>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-slate-800 rounded mb-2">
+                          <span className="text-slate-300">Outstanding Loans</span>
+                          <span className="text-yellow-400 font-bold">{status.agentScore?.outstandingLoans || '0'} USDC</span>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-slate-800 rounded">
+                          <span className="text-slate-300">Available to Borrow</span>
+                          <span className="text-green-400 font-bold">{status.agentScore?.availableCredit || '0'} USDC</span>
+                        </div>
+                      </div>
 
-            {/* Available Tasks */}
-            <div className="bg-slate-700 bg-opacity-50 border border-slate-600 rounded-lg p-8">
-              <h3 className="text-lg font-bold text-white mb-6">Available Tasks</h3>
-              <div className="space-y-4">
-                <div className="p-4 bg-slate-800 rounded border border-slate-600 hover:border-blue-500 cursor-pointer transition">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="text-white font-semibold">Data Structuring</h4>
-                    <span className="text-green-400 font-bold">1.50 USDC</span>
+                      {/* SkillBond Section */}
+                      <div className="border-t border-slate-600 pt-4">
+                        <h4 className="text-sm font-semibold text-purple-400 mb-3">SkillBond (Marketplace)</h4>
+                        <div className="flex justify-between items-center p-3 bg-slate-800 rounded mb-2">
+                          <span className="text-slate-300">Current Tier</span>
+                          <span className="text-purple-400 font-bold">{status.skillBond?.tier || 'NONE'}</span>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-slate-800 rounded mb-2">
+                          <span className="text-slate-300">Staked Amount</span>
+                          <span className="text-white font-bold">{status.skillBond?.stakeAmount || '0'} USDC</span>
+                        </div>
+                        <div className="flex justify-between items-center p-3 bg-slate-800 rounded">
+                          <span className="text-slate-300">Average Rating</span>
+                          <span className="text-white font-bold">{status.averageRating || '—'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tier Info */}
+                <div className="bg-slate-700 bg-opacity-50 border border-slate-600 rounded-lg p-8">
+                  <h3 className="text-lg font-bold text-white mb-6">Available Tiers</h3>
+                  <div className="space-y-3">
+                    {tiers && tiers.map((tier, i) => (
+                      <div key={i} className="p-3 bg-slate-800 rounded text-sm">
+                        <div className="font-bold text-white mb-1">{tier.name}</div>
+                        <div className="text-slate-400 text-xs">
+                          Stake: {tier.stakeRequired} USDC
+                        </div>
+                        <div className="text-slate-400 text-xs">
+                          Payouts: {tier.payoutRange}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <p className="text-sm text-slate-400">Convert CSV to JSON schema</p>
-                  <div className="mt-3 text-xs text-slate-500">Tier: STANDARD</div>
                 </div>
               </div>
+
+              {/* Action Buttons */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-12">
+                <button className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition">
+                  💵 Borrow USDC
+                </button>
+                <button className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition">
+                  💎 Stake for Tier
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Stats */}
+          {!loading && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {[
+                { label: 'Total Agents', value: '—', color: 'blue' },
+                { label: 'Tasks Posted', value: '—', color: 'green' },
+                { label: 'Total Staked', value: '—', color: 'purple' },
+                { label: 'Tasks Completed', value: '—', color: 'orange' },
+              ].map((stat, i) => (
+                <div key={i} className="bg-slate-700 bg-opacity-50 border border-slate-600 rounded-lg p-6">
+                  <div className={`text-sm text-${stat.color}-400 mb-2`}>{stat.label}</div>
+                  <div className="text-3xl font-bold text-white">{stat.value}</div>
+                </div>
+              ))}
             </div>
-          </div>
+          )}
         </div>
       </main>
     </>

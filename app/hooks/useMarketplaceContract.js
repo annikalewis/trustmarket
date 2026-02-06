@@ -223,15 +223,20 @@ export const useMarketplaceContract = () => {
           provider
         );
 
+        console.log('📡 Querying reputation summary for:', agentAddress);
         const summary = await registryContract.getReputationSummary(agentAddress);
-        return {
+        console.log('💾 Summary raw:', summary);
+        
+        const result = {
           subject: summary[0],
           totalRatings: Number(summary[1] || 0),
           value: Number(summary[2] || 0), // reputation value
           lastUpdated: Number(summary[3] || 0)
         };
+        console.log('📊 Parsed summary:', result);
+        return result;
       } catch (err) {
-        console.error('Error fetching reputation summary from official ERC-8004 registry:', err);
+        console.error('❌ Error fetching reputation summary from official ERC-8004 registry:', err);
         return null;
       }
     },
@@ -317,11 +322,16 @@ export const useMarketplaceContract = () => {
         provider
       );
       
+      console.log('📡 Querying Base Mainnet registry:', ERC8004_REPUTATION_REGISTRY);
+      console.log('🔎 Looking up feedback for:', agentAddress);
       const feedback = await registryContract.getFeedback(agentAddress);
+      console.log('📥 Feedback returned:', feedback);
+      console.log('🧮 Feedback length:', feedback?.length);
+      
       // If they have any feedback, they're registered
       return feedback && feedback.length > 0;
     } catch (err) {
-      console.error('Error checking agent registration with official ERC-8004 registry:', err);
+      console.error('❌ Error checking agent registration with official ERC-8004 registry:', err);
       return false;
     }
   }, []);

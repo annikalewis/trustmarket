@@ -34,17 +34,20 @@ export default function Home() {
     const checkRegistration = async () => {
       if (agentAddress) {
         try {
+          console.log('🔍 Checking registration for:', agentAddress)
           const registered = await isAgentRegistered(agentAddress)
+          console.log('📊 Registration result:', registered)
           setIsERC8004Registered(registered)
           
           if (registered) {
             const summary = await getReputationSummary(agentAddress)
+            console.log('💰 Reputation summary:', summary)
             setAgentRepScore(summary?.value || 0)
           } else {
             setAgentRepScore(null)
           }
         } catch (err) {
-          console.error('Error checking ERC-8004 registration:', err)
+          console.error('❌ Error checking ERC-8004 registration:', err)
           setIsERC8004Registered(false)
           setAgentRepScore(null)
         }
@@ -172,7 +175,7 @@ export default function Home() {
             <div className="text-sm text-gray-600">Connected: {agentAddress?.slice(0, 10)}...</div>
             <button 
               onClick={disconnectWallet}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition"
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-800 text-white text-sm font-semibold rounded-lg transition"
             >
               Disconnect
             </button>

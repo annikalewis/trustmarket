@@ -96,6 +96,13 @@ export default function Home() {
     }
   }
 
+  const disconnectWallet = () => {
+    setConnected(false)
+    setAgentAddress(null)
+    setIsERC8004Registered(null)
+    setAgentRepScore(null)
+  }
+
   const convertRatingToValue = (stars) => {
     const mapping = {
       5: 2, 4.5: 2, 4: 1, 3.5: 1, 3: 0, 2.5: -1, 2: -3, 1.5: -3, 1: -3
@@ -161,7 +168,15 @@ export default function Home() {
       <nav className="border-b border-gray-200 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">TrustMarket</h1>
-          <div className="text-sm text-gray-600">Connected: {agentAddress?.slice(0, 10)}...</div>
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-600">Connected: {agentAddress?.slice(0, 10)}...</div>
+            <button 
+              onClick={disconnectWallet}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg transition"
+            >
+              Disconnect
+            </button>
+          </div>
         </div>
       </nav>
 

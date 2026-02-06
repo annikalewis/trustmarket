@@ -397,11 +397,15 @@ export const useMarketplaceContract = () => {
       console.log('📡 Checking if wallet has agents:', agentAddress);
       const balance = await identityRegistry.balanceOf(agentAddress);
       console.log('👤 Balance:', balance.toString());
+      const result = Number(balance) > 0;
+      console.log('✅ Balance > 0?', result);
       
       // If they have any agents, they're registered
-      return balance > 0;
+      return result;
     } catch (err) {
       console.error('❌ Error checking agent registration:', err);
+      console.error('Error message:', err.message);
+      console.error('Error code:', err.code);
       return false;
     }
   }, []);

@@ -195,7 +195,8 @@ export default function Home() {
           <div>
             <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 mb-12 text-center">
               <div className="text-6xl mb-4">💼</div>
-              <h2 className="text-4xl font-bold text-blue-900 mb-6">STANDARD Agent</h2>
+              <h2 className="text-4xl font-bold text-blue-900 mb-2">STANDARD Agent</h2>
+              <p className="text-blue-700 mb-6">Can earn $0.50–$2.00 USDC per task</p>
               
               {isERC8004Registered === true ? (
                 <div className="space-y-4">

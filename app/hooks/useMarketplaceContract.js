@@ -112,8 +112,8 @@ const AGENT_MARKETPLACE_ABI = [
 ];
 
 // CONTRACT ADDRESSES
-// Official ERC-8004 ReputationRegistry on Base Sepolia
-const ERC8004_REPUTATION_REGISTRY = '0x88048668305A597DffPe9eCc1965A1938738B713';
+// Official ERC-8004 ReputationRegistry on Base Mainnet
+const ERC8004_REPUTATION_REGISTRY = '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432';
 
 // Our custom marketplace (for demo task recording)
 // Create .env.local in agentscore-skillbond with:
@@ -200,25 +200,42 @@ export const useMarketplaceContract = () => {
 
   /**
    * Get reputation summary for agent
+   * Queries the official ERC-8004 ReputationRegistry on Base Mainnet
    */
   const getReputationSummary = useCallback(
     async (agentAddress) => {
-      if (!contract) return null;
+      if (!agentAddress) return null;
 
       try {
-        const summary = await contract.getReputationSummary(agentAddress);
+        // Use official ERC-8004 ReputationRegistry on Base Mainnet
+        const provider = new ethers.JsonRpcProvider('https://mainnet.base.org');
+        const registryContract = new ethers.Contract(
+          ERC8004_REPUTATION_REGISTRY,
+          [
+            {
+              'inputs': [{'internalType': 'address', 'name': 'subject', 'type': 'address'}],
+              'name': 'getReputationSummary',
+              'outputs': [{'internalType': 'tuple', 'type': 'tuple'}],
+              'stateMutability': 'view',
+              'type': 'function'
+            }
+          ],
+          provider
+        );
+
+        const summary = await registryContract.getReputationSummary(agentAddress);
         return {
-          subject: summary.subject,
-          totalRatings: Number(summary.totalRatings),
-          averageRating: Number(summary.averageRating),
-          lastUpdated: Number(summary.lastUpdated),
+          subject: summary[0],
+          totalRatings: Number(summary[1] || 0),
+          value: Number(summary[2] || 0), // reputation value
+          lastUpdated: Number(summary[3] || 0)
         };
       } catch (err) {
-        console.error('Error fetching reputation summary:', err);
+        console.error('Error fetching reputation summary from official ERC-8004 registry:', err);
         return null;
       }
     },
-    [contract]
+    []
   );
 
   /**
@@ -277,15 +294,15 @@ export const useMarketplaceContract = () => {
 
   /**
    * Check if agent is registered onchain
-   * Queries the OFFICIAL ERC-8004 ReputationRegistry on Base Sepolia
+   * Queries the OFFICIAL ERC-8004 ReputationRegistry on Base Mainnet
    * An agent is considered registered if they have reputation data
    */
   const isAgentRegistered = useCallback(async (agentAddress) => {
     if (!agentAddress) return false;
 
     try {
-      // Use official ERC-8004 ReputationRegistry on Base Sepolia
-      const provider = new ethers.JsonRpcProvider('https://sepolia.base.org');
+      // Use official ERC-8004 ReputationRegistry on Base Mainnet
+      const provider = new ethers.JsonRpcProvider('https://mainnet.base.org');
       const registryContract = new ethers.Contract(
         ERC8004_REPUTATION_REGISTRY,
         [

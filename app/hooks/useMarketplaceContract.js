@@ -453,8 +453,6 @@ export const useMarketplaceContract = () => {
     isLoading,
     error,
     submitFeedback,
-    getReputationSummary,
-    getVerifiedFeedback,
     getTasksCompleted,
     isVerifiedReviewer,
     isAgentRegistered,

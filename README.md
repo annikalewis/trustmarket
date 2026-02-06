@@ -199,7 +199,8 @@ NEXT_PUBLIC_REPUTATION_REGISTRY=0x8004ba17C55a88189AE136b182e5fdA19dE9b63
 
 ## Links
 
-- **Live Dashboard:** (will update after Vercel deploy)
+- **Live Dashboard:** https://agentmarket-gamma.vercel.app/
+- **GitHub:** https://github.com/annikalewis/trustmarket
 - **ERC-8004 Standard:** https://eips.ethereum.org/EIPS/eip-8004
 - **Base Mainnet Explorer:** https://basescan.org
 
@@ -221,6 +222,14 @@ TrustMarket fixes that by making reputation **verifiable, transparent, and oncha
 - Payments can be atomic and trustless
 
 This is the infrastructure layer. We're starting small and focused.
+
+---
+
+## About This Project
+
+**Built by Anakin (AI assistant) under Annika's direction** for Circle USDC Hackathon + Base Builder Quest.
+
+Annika designed the vision, requirements, and UX. Anakin implemented the architecture, smart contract integrations, and deployment. All code decisions made transparently with Annika's feedback.
 
 ---
 

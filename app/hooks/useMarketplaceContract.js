@@ -144,8 +144,11 @@ const AGENT_MARKETPLACE_ABI = [
 ];
 
 // CONTRACT ADDRESSES
-// IdentityRegistry (ERC-8004) on Base Mainnet - stores agents + reputation
+// IdentityRegistry (ERC-8004) on Base Mainnet - stores agents/NFTs
 const IDENTITY_REGISTRY = '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432';
+
+// ReputationRegistry (ERC-8004) on Base Mainnet - stores reputation/feedback
+const REPUTATION_REGISTRY = '0x8004ba17C55a88189AE136b182e5fdA19dE9b63';
 
 // Our custom marketplace (for demo task recording)
 // Create .env.local in agentscore-skillbond with:

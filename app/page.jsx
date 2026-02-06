@@ -55,7 +55,7 @@ export default function Home() {
       }
     }
     checkRegistration()
-  }, [agentAddress, isAgentRegistered, getAllAgents])
+  }, [agentAddress])
 
   useEffect(() => {
     const loadStatus = async () => {

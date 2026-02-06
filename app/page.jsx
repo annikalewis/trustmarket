@@ -16,11 +16,11 @@ export default function Home() {
   const [connected, setConnected] = useState(false)
   const [agentAddress, setAgentAddress] = useState(null)
   const [isERC8004Registered, setIsERC8004Registered] = useState(null)
-  const [agentRepScore, setAgentRepScore] = useState(null)
+  const [allAgents, setAllAgents] = useState([])
   const [activeTab, setActiveTab] = useState('serviceProvider')
   const { status, loading } = useAgent(agentAddress)
   const { tiers } = useTiers()
-  const { isAgentRegistered, getReputationSummary } = useMarketplaceContract()
+  const { isAgentRegistered, getAllAgents } = useMarketplaceContract()
   
   const [completedTaskId, setCompletedTaskId] = useState(null)
   const [selectedRating, setSelectedRating] = useState(null)
@@ -40,21 +40,22 @@ export default function Home() {
           setIsERC8004Registered(registered)
           
           if (registered) {
-            const summary = await getReputationSummary(agentAddress)
-            console.log('💰 Reputation summary:', summary)
-            setAgentRepScore(summary?.value || 0)
+            // Fetch all agents owned by this wallet
+            const agents = await getAllAgents(agentAddress)
+            console.log('🤖 All agents:', agents)
+            setAllAgents(agents)
           } else {
-            setAgentRepScore(null)
+            setAllAgents([])
           }
         } catch (err) {
           console.error('❌ Error checking ERC-8004 registration:', err)
           setIsERC8004Registered(false)
-          setAgentRepScore(null)
+          setAllAgents([])
         }
       }
     }
     checkRegistration()
-  }, [agentAddress, isAgentRegistered, getReputationSummary])
+  }, [agentAddress, isAgentRegistered, getAllAgents])
 
   useEffect(() => {
     const loadStatus = async () => {
@@ -103,7 +104,7 @@ export default function Home() {
     setConnected(false)
     setAgentAddress(null)
     setIsERC8004Registered(null)
-    setAgentRepScore(null)
+    setAllAgents([])
   }
 
   const convertRatingToValue = (stars) => {
@@ -218,16 +219,32 @@ export default function Home() {
               
               {isERC8004Registered === true ? (
                 <div className="space-y-4">
-                  <div className="flex justify-center items-center gap-8">
+                  <div className="flex justify-center items-center gap-8 mb-4">
                     <div className="bg-white rounded-lg p-4 min-w-[200px]">
                       <p className="text-sm text-gray-600 mb-1">Registered with ERC-8004</p>
                       <p className="text-2xl font-bold text-green-600">✓ Yes</p>
                     </div>
                     <div className="bg-white rounded-lg p-4 min-w-[200px]">
-                      <p className="text-sm text-gray-600 mb-1">Reputation Score</p>
-                      <p className="text-2xl font-bold text-blue-600">{agentRepScore ?? '—'}/100</p>
+                      <p className="text-sm text-gray-600 mb-1">Agents Owned</p>
+                      <p className="text-2xl font-bold text-blue-600">{allAgents.length}</p>
                     </div>
                   </div>
+                  
+                  {allAgents.length > 0 && (
+                    <div className="bg-white rounded-lg p-4 space-y-2">
+                      <p className="text-sm font-semibold text-gray-700">Your Agents:</p>
+                      {allAgents.map((agent, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-gray-50 p-3 rounded border border-gray-200">
+                          <span className="text-sm text-gray-600">
+                            <span className="font-semibold">Token #{agent.tokenId}</span>
+                          </span>
+                          <span className="text-xs text-gray-500 font-mono">
+                            {agent.agentAddress.slice(0, 6)}...{agent.agentAddress.slice(-4)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ) : isERC8004Registered === false ? (
                 <div className="space-y-4">

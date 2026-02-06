@@ -1,6 +1,38 @@
 import { useState, useCallback, useEffect } from 'react';
 import { ethers } from 'ethers';
 
+// IdentityRegistry ABI (ERC-8004)
+const IDENTITY_REGISTRY_ABI = [
+  {
+    'inputs': [{'internalType': 'address', 'name': 'owner', 'type': 'address'}],
+    'name': 'balanceOf',
+    'outputs': [{'internalType': 'uint256', 'name': '', 'type': 'uint256'}],
+    'stateMutability': 'view',
+    'type': 'function'
+  },
+  {
+    'inputs': [{'internalType': 'uint256', 'name': 'agentId', 'type': 'uint256'}],
+    'name': 'getAgentWallet',
+    'outputs': [{'internalType': 'address', 'name': '', 'type': 'address'}],
+    'stateMutability': 'view',
+    'type': 'function'
+  },
+  {
+    'inputs': [{'internalType': 'address', 'name': 'owner', 'type': 'address'}, {'internalType': 'uint256', 'name': 'index', 'type': 'uint256'}],
+    'name': 'tokenOfOwnerByIndex',
+    'outputs': [{'internalType': 'uint256', 'name': '', 'type': 'uint256'}],
+    'stateMutability': 'view',
+    'type': 'function'
+  },
+  {
+    'inputs': [{'internalType': 'uint256', 'name': 'tokenId', 'type': 'uint256'}],
+    'name': 'tokenURI',
+    'outputs': [{'internalType': 'string', 'name': '', 'type': 'string'}],
+    'stateMutability': 'view',
+    'type': 'function'
+  }
+];
+
 // ABI exported from AgentMarketplace.sol
 const AGENT_MARKETPLACE_ABI = [
   {
@@ -112,8 +144,8 @@ const AGENT_MARKETPLACE_ABI = [
 ];
 
 // CONTRACT ADDRESSES
-// Official ERC-8004 ReputationRegistry on Base Mainnet
-const ERC8004_REPUTATION_REGISTRY = '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432';
+// IdentityRegistry (ERC-8004) on Base Mainnet - stores agents + reputation
+const IDENTITY_REGISTRY = '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432';
 
 // Our custom marketplace (for demo task recording)
 // Create .env.local in agentscore-skillbond with:
@@ -302,36 +334,71 @@ export const useMarketplaceContract = () => {
    * Queries the OFFICIAL ERC-8004 ReputationRegistry on Base Mainnet
    * An agent is considered registered if they have reputation data
    */
+  /**
+   * Get all agents owned by a wallet
+   */
+  const getAllAgents = useCallback(async (walletAddress) => {
+    if (!walletAddress) return [];
+
+    try {
+      const provider = new ethers.JsonRpcProvider('https://mainnet.base.org');
+      const identityRegistry = new ethers.Contract(
+        IDENTITY_REGISTRY,
+        IDENTITY_REGISTRY_ABI,
+        provider
+      );
+
+      console.log('🔍 Fetching agents for wallet:', walletAddress);
+      
+      // Get number of agents
+      const balance = await identityRegistry.balanceOf(walletAddress);
+      console.log('📊 Agent balance:', balance.toString());
+
+      const agents = [];
+      for (let i = 0; i < balance; i++) {
+        try {
+          const tokenId = await identityRegistry.tokenOfOwnerByIndex(walletAddress, i);
+          const agentAddress = await identityRegistry.getAgentWallet(tokenId);
+          
+          console.log(`✅ Agent ${i}: TokenID=${tokenId.toString()}, Address=${agentAddress}`);
+          
+          agents.push({
+            tokenId: tokenId.toString(),
+            agentAddress: agentAddress,
+            index: i
+          });
+        } catch (err) {
+          console.error(`❌ Error fetching agent ${i}:`, err);
+        }
+      }
+
+      return agents;
+    } catch (err) {
+      console.error('❌ Error fetching all agents:', err);
+      return [];
+    }
+  }, []);
+
   const isAgentRegistered = useCallback(async (agentAddress) => {
     if (!agentAddress) return false;
 
     try {
-      // Use official ERC-8004 ReputationRegistry on Base Mainnet
+      // Use official ERC-8004 IdentityRegistry on Base Mainnet
       const provider = new ethers.JsonRpcProvider('https://mainnet.base.org');
-      const registryContract = new ethers.Contract(
-        ERC8004_REPUTATION_REGISTRY,
-        [
-          {
-            'inputs': [{'internalType': 'address', 'name': 'subject', 'type': 'address'}],
-            'name': 'getFeedback',
-            'outputs': [{'internalType': 'tuple[]', 'type': 'tuple[]'}],
-            'stateMutability': 'view',
-            'type': 'function'
-          }
-        ],
+      const identityRegistry = new ethers.Contract(
+        IDENTITY_REGISTRY,
+        IDENTITY_REGISTRY_ABI,
         provider
       );
       
-      console.log('📡 Querying Base Mainnet registry:', ERC8004_REPUTATION_REGISTRY);
-      console.log('🔎 Looking up feedback for:', agentAddress);
-      const feedback = await registryContract.getFeedback(agentAddress);
-      console.log('📥 Feedback returned:', feedback);
-      console.log('🧮 Feedback length:', feedback?.length);
+      console.log('📡 Checking if wallet has agents:', agentAddress);
+      const balance = await identityRegistry.balanceOf(agentAddress);
+      console.log('👤 Balance:', balance.toString());
       
-      // If they have any feedback, they're registered
-      return feedback && feedback.length > 0;
+      // If they have any agents, they're registered
+      return balance > 0;
     } catch (err) {
-      console.error('❌ Error checking agent registration with official ERC-8004 registry:', err);
+      console.error('❌ Error checking agent registration:', err);
       return false;
     }
   }, []);
@@ -384,6 +451,7 @@ export const useMarketplaceContract = () => {
     getTasksCompleted,
     isVerifiedReviewer,
     isAgentRegistered,
+    getAllAgents,
     recordDemoTaskCompletion,
   };
 };

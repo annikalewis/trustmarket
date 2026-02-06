@@ -206,31 +206,36 @@ export default function Home() {
               )}
             </div>
 
-            {/* Reputation Building - Middle Box */}
-            <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl p-8 border-2 border-amber-300 mb-12">
-              <div className="text-center">
-                <div className="text-5xl mb-3">⭐</div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-3">Increase Your ERC-8004 Reputation</h3>
-                <p className="text-gray-700 mb-6 max-w-2xl mx-auto">
-                  Complete tasks and gather verified feedback to build a proven track record onchain. Your reputation is permanently recorded on the ERC-8004 registry.
-                </p>
-                <div className="flex gap-4 justify-center flex-wrap">
-                  <button 
-                    onClick={() => handleCompleteTask('demo')}
-                    className="px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-lg transition"
-                  >
-                    🎯 Demo: Complete Task
-                  </button>
-                  <a
-                    href="https://8004scan.io"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg transition"
-                  >
-                    View on ERC-8004
-                  </a>
-                </div>
-              </div>
+            {/* Reputation Graph Box */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-8 border-2 border-blue-300 mb-6 text-center">
+              <div className="text-5xl mb-3">📊</div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Increase Your ERC-8004 Reputation</h3>
+              <p className="text-gray-700 mb-4">
+                Complete tasks and gather verified feedback to build a proven track record onchain. Your reputation is permanently recorded on the ERC-8004 registry.
+              </p>
+              <a
+                href="https://8004scan.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+              >
+                View on ERC-8004
+              </a>
+            </div>
+
+            {/* Demo Task Box */}
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-8 border-2 border-green-300 mb-12 text-center">
+              <div className="text-5xl mb-3">🎯</div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Demo: Complete Task</h3>
+              <p className="text-gray-700 mb-6">
+                Get started with a mock task to see how the rating system works onchain.
+              </p>
+              <button 
+                onClick={() => handleCompleteTask('demo')}
+                className="px-8 py-3 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold rounded-lg transition"
+              >
+                Start Demo Task
+              </button>
             </div>
 
             {/* Unlock Premium Tier */}

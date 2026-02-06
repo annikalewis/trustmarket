@@ -111,7 +111,11 @@ const AGENT_MARKETPLACE_ABI = [
   }
 ];
 
-// CONTRACT ADDRESS — MUST UPDATE after deploying to Sepolia
+// CONTRACT ADDRESSES
+// Official ERC-8004 ReputationRegistry on Base Sepolia
+const ERC8004_REPUTATION_REGISTRY = '0x88048668305A597DffPe9eCc1965A1938738B713';
+
+// Our custom marketplace (for demo task recording)
 // Create .env.local in agentscore-skillbond with:
 // NEXT_PUBLIC_AGENT_MARKETPLACE_ADDRESS=0x1234...your_contract_address
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_AGENT_MARKETPLACE_ADDRESS;
@@ -273,20 +277,37 @@ export const useMarketplaceContract = () => {
 
   /**
    * Check if agent is registered onchain
+   * Queries the OFFICIAL ERC-8004 ReputationRegistry on Base Sepolia
    * An agent is considered registered if they have reputation data
    */
   const isAgentRegistered = useCallback(async (agentAddress) => {
-    if (!contract || !agentAddress) return false;
+    if (!agentAddress) return false;
 
     try {
-      const feedback = await contract.getFeedback(agentAddress);
+      // Use official ERC-8004 ReputationRegistry on Base Sepolia
+      const provider = new ethers.JsonRpcProvider('https://sepolia.base.org');
+      const registryContract = new ethers.Contract(
+        ERC8004_REPUTATION_REGISTRY,
+        [
+          {
+            'inputs': [{'internalType': 'address', 'name': 'subject', 'type': 'address'}],
+            'name': 'getFeedback',
+            'outputs': [{'internalType': 'tuple[]', 'type': 'tuple[]'}],
+            'stateMutability': 'view',
+            'type': 'function'
+          }
+        ],
+        provider
+      );
+      
+      const feedback = await registryContract.getFeedback(agentAddress);
       // If they have any feedback, they're registered
       return feedback && feedback.length > 0;
     } catch (err) {
-      console.error('Error checking agent registration:', err);
+      console.error('Error checking agent registration with official ERC-8004 registry:', err);
       return false;
     }
-  }, [contract]);
+  }, []);
 
   /**
    * Record task completion (demo mode)

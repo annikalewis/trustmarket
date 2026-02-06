@@ -1,5 +1,7 @@
 # TrustMarket: Verified Agent Reputation onchain
 
+**Built by Anakin (Annika's OpenClaw Bot) under Annika's direction** for autonomous agent commerce.
+
 **Infrastructure for autonomous agent commerce.** A marketplace foundation built on the official ERC-8004 standard that enables service providers to discover tasks matched to their reputation tier, and prospective buyers to find agents capable of completing the work they need.
 
 ## What This Does Today
@@ -290,14 +292,6 @@ TrustMarket fixes that by making reputation **verifiable, transparent, and oncha
 - Payments can be atomic and trustless
 
 This is the infrastructure layer. We're starting small and focused.
-
----
-
-## About This Project
-
-**Built by Anakin (AI assistant) under Annika's direction** for Circle USDC Hackathon + Base Builder Quest.
-
-Annika designed the vision, requirements, and UX. Anakin implemented the architecture, smart contract integrations, and deployment. All code decisions made transparently with Annika's feedback.
 
 ---
 

@@ -16,10 +16,11 @@ export default function Home() {
   const [connected, setConnected] = useState(false)
   const [agentAddress, setAgentAddress] = useState(null)
   const [isERC8004Registered, setIsERC8004Registered] = useState(null)
+  const [agentRepScore, setAgentRepScore] = useState(null)
   const [activeTab, setActiveTab] = useState('serviceProvider')
   const { status, loading } = useAgent(agentAddress)
   const { tiers } = useTiers()
-  const { isAgentRegistered } = useMarketplaceContract()
+  const { isAgentRegistered, getReputationSummary } = useMarketplaceContract()
   
   const [completedTaskId, setCompletedTaskId] = useState(null)
   const [selectedRating, setSelectedRating] = useState(null)
@@ -35,14 +36,22 @@ export default function Home() {
         try {
           const registered = await isAgentRegistered(agentAddress)
           setIsERC8004Registered(registered)
+          
+          if (registered) {
+            const summary = await getReputationSummary(agentAddress)
+            setAgentRepScore(summary?.value || 0)
+          } else {
+            setAgentRepScore(null)
+          }
         } catch (err) {
           console.error('Error checking ERC-8004 registration:', err)
           setIsERC8004Registered(false)
+          setAgentRepScore(null)
         }
       }
     }
     checkRegistration()
-  }, [agentAddress, isAgentRegistered])
+  }, [agentAddress, isAgentRegistered, getReputationSummary])
 
   useEffect(() => {
     const loadStatus = async () => {
@@ -185,37 +194,50 @@ export default function Home() {
         {activeTab === 'serviceProvider' && (
           <div>
             <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 mb-12 text-center">
-              <div className="text-6xl mb-4">⭐</div>
-              <h2 className="text-4xl font-bold text-blue-900 mb-2">STANDARD Agent</h2>
-              <p className="text-blue-700">Earning 0.5 - 2.0 USDC per task</p>
+              <div className="text-6xl mb-4">💼</div>
+              <h2 className="text-4xl font-bold text-blue-900 mb-6">STANDARD Agent</h2>
               
               {isERC8004Registered === true ? (
-                <div className="mt-6 space-y-3">
-                  <div className="inline-block bg-white px-6 py-2 rounded-lg">
-                    <span className="text-sm text-gray-600">ERC-8004 Status: </span>
-                    <span className="font-bold text-green-600">✓ Registered</span>
-                  </div>
-                  <div className="inline-block bg-white px-6 py-2 rounded-lg ml-4">
-                    <span className="text-sm text-gray-600">Reputation: </span>
-                    <span className="font-bold text-gray-900">85/100</span>
+                <div className="space-y-4">
+                  <div className="flex justify-center items-center gap-8">
+                    <div className="bg-white rounded-lg p-4 min-w-[200px]">
+                      <p className="text-sm text-gray-600 mb-1">Registered with ERC-8004</p>
+                      <p className="text-2xl font-bold text-green-600">✓ Yes</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 min-w-[200px]">
+                      <p className="text-sm text-gray-600 mb-1">Reputation</p>
+                      <p className="text-2xl font-bold text-blue-600">{agentRepScore ?? '—'}/100</p>
+                    </div>
                   </div>
                 </div>
               ) : isERC8004Registered === false ? (
-                <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-yellow-900 mb-3">
-                    Register with ERC-8004 to start earning reputation onchain
-                  </p>
-                  <a
-                    href="https://8004scan.io"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
-                  >
-                    Register with ERC-8004
-                  </a>
+                <div className="space-y-4">
+                  <div className="flex justify-center items-center gap-8">
+                    <div className="bg-white rounded-lg p-4 min-w-[200px]">
+                      <p className="text-sm text-gray-600 mb-1">Registered with ERC-8004</p>
+                      <p className="text-2xl font-bold text-red-600">✗ No</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 min-w-[200px]">
+                      <p className="text-sm text-gray-600 mb-1">Reputation</p>
+                      <p className="text-2xl font-bold text-gray-500">Not Applicable</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                    <p className="text-sm text-yellow-900 mb-2">
+                      Register with ERC-8004 to start earning reputation onchain
+                    </p>
+                    <a
+                      href="https://8004scan.io"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition text-sm"
+                    >
+                      Register with ERC-8004
+                    </a>
+                  </div>
                 </div>
               ) : (
-                <div className="mt-4 text-sm text-gray-600">Checking ERC-8004 registration...</div>
+                <div className="text-sm text-gray-600">Checking ERC-8004 registration...</div>
               )}
             </div>
 

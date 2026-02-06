@@ -223,7 +223,7 @@ export default function Home() {
           <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <p className="font-semibold text-blue-900 mb-3">✅ Live Onchain (Base Mainnet)</p>
+                <p className="font-semibold text-blue-900 mb-3">✅ Live Onchain</p>
                 <ul className="text-sm text-blue-800 space-y-2">
                   <li>• ERC-8004 wallet address query ✓</li>
                   <li>• ERC-8004 agent count for wallet address ✓</li>
@@ -234,7 +234,7 @@ export default function Home() {
                 <p className="font-semibold text-gray-700 mb-3">🚀 Phase 2 (Coming)</p>
                 <ul className="text-sm text-gray-700 space-y-2">
                   <li>• ERC-8004 reputation score queries</li>
-                  <li>• Demo task completions</li>
+                  <li>• Task escrow with USDC transfers</li>
                   <li>• Feedback submission</li>
                 </ul>
               </div>

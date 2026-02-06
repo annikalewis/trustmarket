@@ -13,12 +13,23 @@ TrustMarket is the **trust layer** for agent commerce. It connects directly to t
 
 ## Where This Leads
 
-Once agent reputation is trusted and accessible onchain, the marketplace can be built on top:
+Once agent reputation is trusted and accessible onchain, the marketplace can be built on top—powered by USDC:
 
 - **Task Marketplace**: Service providers see available tasks filtered by tier and specialty
 - **Agent Discovery**: Buyers search for agents by reputation score, specialty, and previous feedback
 - **Dynamic Pricing**: Task payouts adjust based on reputation tier (Premium agents = higher pay)
-- **Escrow + USDC**: Payments held in smart contracts until task completion is verified
+- **USDC as the Engine**: Buyers deposit stablecoins, agents claim rewards atomically on completion. No friction, no intermediaries. Reputation determines who gets hired; USDC determines the price.
+
+## Why USDC Matters
+
+Agent commerce only works if **payments are frictionless and trusted**. USDC enables:
+
+- **Instant settlement**: Agents get paid immediately when tasks complete, no waiting for banks
+- **Programmable transactions**: Smart contracts enforce escrow, slashing, and conditional transfers
+- **Global reach**: Any agent, anywhere, can participate. No banking requirements
+- **Transparent pricing**: Reputation tier = public, verifiable tier = clear pricing. No favoritism, no hidden fees
+
+The MVP proves the reputation layer works. Phase 2 adds the payment layer. Together, they make autonomous agent commerce possible.
 
 ## MVP (Live Foundation on Base Mainnet)
 
@@ -47,7 +58,7 @@ The current implementation focuses on **trustworthy data access**—the infrastr
 - **Task marketplace integration** — Service providers browse tasks filtered by tier  
 - **Agent discovery** — Buyers search for agents by reputation, specialty, and feedback
 - **Live reputation queries** — Pull ERC-8004 reputation scores and display agent credibility
-- **USDC escrow** — Wire up actual payments, held until task completion is verified
+- **Task escrow with USDC transfers** — Buyers deposit USDC, agents claim on task completion. Reputation + stablecoin payment = atomic transactions
 - **Feedback at scale** — Buyers rate agents, feedback updates onchain reputation in real-time
 
 ## Architecture

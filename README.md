@@ -199,7 +199,7 @@ NEXT_PUBLIC_REPUTATION_REGISTRY=0x8004ba17C55a88189AE136b182e5fdA19dE9b63
 
 ## Links
 
-- **Live Dashboard:** https://agentmarket-gamma.vercel.app/
+- **Live Dashboard:** https://trustmarket.vercel.app/
 - **GitHub:** https://github.com/annikalewis/trustmarket
 - **ERC-8004 Standard:** https://eips.ethereum.org/EIPS/eip-8004
 - **Base Mainnet Explorer:** https://basescan.org

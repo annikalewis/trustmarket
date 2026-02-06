@@ -173,43 +173,79 @@ export default function Home() {
               <div className="text-6xl mb-4">⭐</div>
               <h2 className="text-4xl font-bold text-blue-900 mb-2">STANDARD Agent</h2>
               <p className="text-blue-700">Earning 0.5 - 2.0 USDC per task</p>
-              <div className="mt-4 inline-block bg-white px-6 py-2 rounded-lg">
-                <span className="text-sm text-gray-600">Reputation: </span>
-                <span className="font-bold text-gray-900">85/100</span>
-              </div>
+              
+              {isERC8004Registered === true ? (
+                <div className="mt-6 space-y-3">
+                  <div className="inline-block bg-white px-6 py-2 rounded-lg">
+                    <span className="text-sm text-gray-600">ERC-8004 Status: </span>
+                    <span className="font-bold text-green-600">✓ Registered</span>
+                  </div>
+                  <div className="inline-block bg-white px-6 py-2 rounded-lg ml-4">
+                    <span className="text-sm text-gray-600">Reputation: </span>
+                    <span className="font-bold text-gray-900">85/100</span>
+                  </div>
+                </div>
+              ) : isERC8004Registered === false ? (
+                <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-yellow-900 mb-3">
+                    Register with ERC-8004 to start earning reputation onchain
+                  </p>
+                  <a
+                    href="https://8004scan.io"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+                  >
+                    Register with ERC-8004
+                  </a>
+                </div>
+              ) : (
+                <div className="mt-4 text-sm text-gray-600">Checking ERC-8004 registration...</div>
+              )}
             </div>
 
-            {status ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                <div className="bg-white rounded-xl p-8 shadow-md border border-gray-100">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">💵 AgentScore</h3>
-                  <div className="space-y-3 bg-blue-50 p-4 rounded-lg">
-                    <div className="flex justify-between">
-                      <span className="text-gray-700">Credit Available</span>
-                      <span className="font-bold text-blue-600">{status.agentScore?.availableCredit || '3.00'} USDC</span>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+              <div className="bg-white rounded-xl p-8 shadow-md border border-gray-100">
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">💵 AgentScore</h3>
+                <div className="space-y-3 bg-blue-50 p-4 rounded-lg">
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">Credit Available</span>
+                    <span className="font-bold text-blue-600">{status?.agentScore?.availableCredit || '3.00'} USDC</span>
                   </div>
-                  <button className="w-full mt-4 bg-blue-600 text-white font-bold py-3 rounded-lg">
-                    Borrow Now
-                  </button>
                 </div>
-
-                <div className="bg-white rounded-xl p-8 shadow-md border border-gray-100">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-4">💎 SkillBond</h3>
-                  <div className="space-y-3 bg-purple-50 p-4 rounded-lg">
-                    <div className="flex justify-between">
-                      <span className="text-gray-700">Current Stake</span>
-                      <span className="font-bold text-purple-600">{status.skillBond?.stakeAmount || '1.00'} USDC</span>
-                    </div>
-                  </div>
-                  <button className="w-full mt-4 bg-purple-600 text-white font-bold py-3 rounded-lg">
-                    Stake for Next Tier
-                  </button>
-                </div>
+                <button className="w-full mt-4 bg-blue-600 text-white font-bold py-3 rounded-lg">
+                  Borrow Now
+                </button>
               </div>
-            ) : loading ? (
-              <p className="text-center text-gray-600">Loading...</p>
-            ) : null}
+
+              <div className="bg-white rounded-xl p-8 shadow-md border border-gray-100">
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">💎 SkillBond</h3>
+                <div className="space-y-3 bg-purple-50 p-4 rounded-lg">
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">Current Stake</span>
+                    <span className="font-bold text-purple-600">{status?.skillBond?.stakeAmount || '1.00'} USDC</span>
+                  </div>
+                </div>
+                <button className="w-full mt-4 bg-purple-600 text-white font-bold py-3 rounded-lg">
+                  Stake for Next Tier
+                </button>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-8 shadow-md border-2 border-green-300">
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">🎯 Demo Task</h3>
+                <div className="space-y-3 bg-green-100 bg-opacity-50 p-4 rounded-lg mb-4">
+                  <p className="text-sm text-gray-700">
+                    <strong>Get started:</strong> Complete a mock task to earn reputation and see how the rating system works onchain.
+                  </p>
+                </div>
+                <button 
+                  onClick={() => handleCompleteTask('demo')}
+                  className="w-full bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-bold py-3 rounded-lg transition"
+                >
+                  Demo: Complete Task
+                </button>
+              </div>
+            </div>
 
             {/* Unlock Premium Tier */}
             <div className="bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl p-8 border-2 border-indigo-200 text-center">

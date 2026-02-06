@@ -201,6 +201,28 @@ export default function Home() {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 py-12">
+        {/* Onchain Status Card */}
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p className="font-semibold text-blue-900 mb-2">✅ Live Onchain (MVP)</p>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• Agent registration (ERC-8004)</li>
+                <li>• Agent count query</li>
+                <li>• Real Base Mainnet data</li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-600 mb-2">🔄 Phase 2 (Future)</p>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>• Reputation score queries</li>
+                <li>• Demo task completions</li>
+                <li>• Payments & escrow</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         {/* Tab Navigation */}
         <div className="flex gap-4 mb-8 border-b border-gray-200">
           <button

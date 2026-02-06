@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAgent, useTiers, useTasks } from './hooks/useAgent'
+import useMarketplaceContract from './hooks/useMarketplaceContract'
 import StarRating from './components/StarRating'
 import useReputationFiltering from './hooks/useReputationFiltering'
 
@@ -18,6 +19,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('serviceProvider')
   const { status, loading } = useAgent(agentAddress)
   const { tiers } = useTiers()
+  const { isAgentRegistered } = useMarketplaceContract()
   
   const [completedTaskId, setCompletedTaskId] = useState(null)
   const [selectedRating, setSelectedRating] = useState(null)
@@ -26,6 +28,21 @@ export default function Home() {
   const [taskStatus, setTaskStatus] = useState(null)
   const [selectedAgent, setSelectedAgent] = useState(null)
   const [agentReputation, setAgentReputation] = useState(null)
+
+  useEffect(() => {
+    const checkRegistration = async () => {
+      if (agentAddress) {
+        try {
+          const registered = await isAgentRegistered(agentAddress)
+          setIsERC8004Registered(registered)
+        } catch (err) {
+          console.error('Error checking ERC-8004 registration:', err)
+          setIsERC8004Registered(false)
+        }
+      }
+    }
+    checkRegistration()
+  }, [agentAddress, isAgentRegistered])
 
   useEffect(() => {
     const loadStatus = async () => {
@@ -43,8 +60,6 @@ export default function Home() {
           if (accounts.length > 0) {
             setConnected(true)
             setAgentAddress(accounts[0])
-            // Don't assume registration — check it
-            setIsERC8004Registered(false)
           }
         } catch (err) {
           console.error('Error checking wallet:', err)
@@ -63,8 +78,6 @@ export default function Home() {
         if (accounts.length > 0) {
           setConnected(true)
           setAgentAddress(accounts[0])
-          // Don't assume registration — check it
-          setIsERC8004Registered(false)
         }
       } catch (err) {
         console.error('Error connecting wallet:', err)

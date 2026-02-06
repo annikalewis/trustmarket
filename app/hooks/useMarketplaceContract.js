@@ -272,6 +272,23 @@ export const useMarketplaceContract = () => {
   }, [contract, account]);
 
   /**
+   * Check if agent is registered onchain
+   * An agent is considered registered if they have reputation data
+   */
+  const isAgentRegistered = useCallback(async (agentAddress) => {
+    if (!contract || !agentAddress) return false;
+
+    try {
+      const feedback = await contract.getFeedback(agentAddress);
+      // If they have any feedback, they're registered
+      return feedback && feedback.length > 0;
+    } catch (err) {
+      console.error('Error checking agent registration:', err);
+      return false;
+    }
+  }, [contract]);
+
+  /**
    * Record task completion (demo mode)
    * In production, this would be called by backend after task completion proof/oracle validation
    * For demo: We call it from frontend so you can see the progression (1/3 → 2/3 → 3/3)
@@ -318,6 +335,7 @@ export const useMarketplaceContract = () => {
     getVerifiedFeedback,
     getTasksCompleted,
     isVerifiedReviewer,
+    isAgentRegistered,
     recordDemoTaskCompletion,
   };
 };

@@ -2,12 +2,38 @@
 
 import { useState, useEffect } from 'react'
 import { useAgent, useTiers, useTasks } from './hooks/useAgent'
+import StarRating from './components/StarRating'
+import useReputationFiltering from './hooks/useReputationFiltering'
+
+const mockTasks = [
+  { id: 1, name: "Verify USDC transfer", payout: 0.75 },
+  { id: 2, name: "Audit smart contract", payout: 1.50 },
+  { id: 3, name: "Test API endpoint", payout: 0.50 }
+]
 
 export default function Home() {
   const [connected, setConnected] = useState(false)
   const [agentAddress, setAgentAddress] = useState(null)
+  const [isERC8004Registered, setIsERC8004Registered] = useState(null)
+  const [activeTab, setActiveTab] = useState('serviceProvider')
   const { status, loading } = useAgent(agentAddress)
   const { tiers } = useTiers()
+  
+  const [completedTaskId, setCompletedTaskId] = useState(null)
+  const [selectedRating, setSelectedRating] = useState(null)
+  const [ratedTasks, setRatedTasks] = useState(new Set())
+  const { fetchUserTaskStatus, userTasksCompleted, userIsVerified, isLoading: repLoading } = useReputationFiltering()
+  const [taskStatus, setTaskStatus] = useState(null)
+  const [selectedAgent, setSelectedAgent] = useState(null)
+  const [agentReputation, setAgentReputation] = useState(null)
+
+  useEffect(() => {
+    const loadStatus = async () => {
+      const status = await fetchUserTaskStatus()
+      setTaskStatus(status)
+    }
+    if (connected) loadStatus()
+  }, [connected])
 
   useEffect(() => {
     const checkWallet = async () => {
@@ -17,6 +43,7 @@ export default function Home() {
           if (accounts.length > 0) {
             setConnected(true)
             setAgentAddress(accounts[0])
+            setIsERC8004Registered(true)
           }
         } catch (err) {
           console.error('Error checking wallet:', err)
@@ -35,12 +62,37 @@ export default function Home() {
         if (accounts.length > 0) {
           setConnected(true)
           setAgentAddress(accounts[0])
+          setIsERC8004Registered(true)
         }
       } catch (err) {
         console.error('Error connecting wallet:', err)
       }
     } else {
       alert('Please install MetaMask or Coinbase Wallet')
+    }
+  }
+
+  const convertRatingToValue = (stars) => {
+    const mapping = {
+      5: 2, 4.5: 2, 4: 1, 3.5: 1, 3: 0, 2.5: -1, 2: -3, 1.5: -3, 1: -3
+    }
+    return mapping[stars] || 0
+  }
+
+  const handleCompleteTask = (taskId) => {
+    setCompletedTaskId(taskId)
+    setSelectedRating(null)
+  }
+
+  const handleRateTask = (rating) => {
+    setSelectedRating(rating)
+  }
+
+  const handleCloseFeedback = () => {
+    if (selectedRating && completedTaskId) {
+      setRatedTasks(new Set([...ratedTasks, completedTaskId]))
+      setCompletedTaskId(null)
+      setSelectedRating(null)
     }
   }
 
@@ -51,7 +103,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg flex items-center justify-center font-bold text-white">🤖</div>
-              <h1 className="text-2xl font-bold text-gray-900">AgentScore + SkillBond</h1>
+              <h1 className="text-2xl font-bold text-gray-900">TrustMarket</h1>
             </div>
             <button 
               onClick={connectWallet}
@@ -64,10 +116,10 @@ export default function Home() {
 
         <div className="max-w-4xl mx-auto px-4 py-20 text-center">
           <h2 className="text-5xl font-bold text-gray-900 mb-4">
-            Autonomous Agent Commerce
+            Verified Agent Reputation onchain
           </h2>
           <p className="text-xl text-gray-600 mb-8">
-            Agents stake USDC, complete tasks, level up, earn rewards.
+            Complete tasks. Build reputation. Prove it onchain with ERC-8004.
           </p>
           <button 
             onClick={connectWallet}
@@ -84,61 +136,203 @@ export default function Home() {
     <main className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-pink-50">
       <nav className="border-b border-gray-200 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">AgentScore + SkillBond</h1>
+          <h1 className="text-2xl font-bold text-gray-900">TrustMarket</h1>
           <div className="text-sm text-gray-600">Connected: {agentAddress?.slice(0, 10)}...</div>
         </div>
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 mb-12 text-center">
-          <div className="text-6xl mb-4">⭐</div>
-          <h2 className="text-4xl font-bold text-blue-900 mb-2">STANDARD Agent</h2>
-          <p className="text-blue-700">Earning 0.5 - 2.0 USDC per task</p>
-          <div className="mt-4 inline-block bg-white px-6 py-2 rounded-lg">
-            <span className="text-sm text-gray-600">Reputation: </span>
-            <span className="font-bold text-gray-900">85/100</span>
-          </div>
-        </div>
-
-        {status ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-            <div className="bg-white rounded-xl p-8 shadow-md border border-gray-100">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">💵 AgentScore</h3>
-              <div className="space-y-3 bg-blue-50 p-4 rounded-lg">
-                <div className="flex justify-between">
-                  <span className="text-gray-700">Credit Available</span>
-                  <span className="font-bold text-blue-600">{status.agentScore?.availableCredit || '3.00'} USDC</span>
-                </div>
-              </div>
-              <button className="w-full mt-4 bg-blue-600 text-white font-bold py-3 rounded-lg">
-                Borrow Now
-              </button>
-            </div>
-
-            <div className="bg-white rounded-xl p-8 shadow-md border border-gray-100">
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">💎 SkillBond</h3>
-              <div className="space-y-3 bg-purple-50 p-4 rounded-lg">
-                <div className="flex justify-between">
-                  <span className="text-gray-700">Current Stake</span>
-                  <span className="font-bold text-purple-600">{status.skillBond?.stakeAmount || '1.00'} USDC</span>
-                </div>
-              </div>
-              <button className="w-full mt-4 bg-purple-600 text-white font-bold py-3 rounded-lg">
-                Stake for Next Tier
-              </button>
-            </div>
-          </div>
-        ) : loading ? (
-          <p className="text-center text-gray-600">Loading...</p>
-        ) : null}
-
-        <div className="bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl p-8 border-2 border-indigo-200 text-center">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Level up to PREMIUM 👑</h3>
-          <p className="text-gray-700 mb-4">Stake 5 USDC to unlock 2-10 USDC tasks</p>
-          <button className="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-lg">
-            Upgrade Now 🚀
+        {/* Tab Navigation */}
+        <div className="flex gap-4 mb-8 border-b border-gray-200">
+          <button
+            onClick={() => setActiveTab('serviceProvider')}
+            className={`px-6 py-3 font-semibold transition ${
+              activeTab === 'serviceProvider'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Service Provider
+          </button>
+          <button
+            onClick={() => setActiveTab('buyer')}
+            className={`px-6 py-3 font-semibold transition ${
+              activeTab === 'buyer'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Buyer (Rate Agents)
           </button>
         </div>
+
+        {/* SERVICE PROVIDER VIEW */}
+        {activeTab === 'serviceProvider' && (
+          <div>
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 mb-12 text-center">
+              <div className="text-6xl mb-4">⭐</div>
+              <h2 className="text-4xl font-bold text-blue-900 mb-2">STANDARD Agent</h2>
+              <p className="text-blue-700">Earning 0.5 - 2.0 USDC per task</p>
+              <div className="mt-4 inline-block bg-white px-6 py-2 rounded-lg">
+                <span className="text-sm text-gray-600">Reputation: </span>
+                <span className="font-bold text-gray-900">85/100</span>
+              </div>
+            </div>
+
+            {status ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                <div className="bg-white rounded-xl p-8 shadow-md border border-gray-100">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">💵 AgentScore</h3>
+                  <div className="space-y-3 bg-blue-50 p-4 rounded-lg">
+                    <div className="flex justify-between">
+                      <span className="text-gray-700">Credit Available</span>
+                      <span className="font-bold text-blue-600">{status.agentScore?.availableCredit || '3.00'} USDC</span>
+                    </div>
+                  </div>
+                  <button className="w-full mt-4 bg-blue-600 text-white font-bold py-3 rounded-lg">
+                    Borrow Now
+                  </button>
+                </div>
+
+                <div className="bg-white rounded-xl p-8 shadow-md border border-gray-100">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-4">💎 SkillBond</h3>
+                  <div className="space-y-3 bg-purple-50 p-4 rounded-lg">
+                    <div className="flex justify-between">
+                      <span className="text-gray-700">Current Stake</span>
+                      <span className="font-bold text-purple-600">{status.skillBond?.stakeAmount || '1.00'} USDC</span>
+                    </div>
+                  </div>
+                  <button className="w-full mt-4 bg-purple-600 text-white font-bold py-3 rounded-lg">
+                    Stake for Next Tier
+                  </button>
+                </div>
+              </div>
+            ) : loading ? (
+              <p className="text-center text-gray-600">Loading...</p>
+            ) : null}
+
+            {/* Unlock Premium Tier */}
+            <div className="bg-gradient-to-r from-indigo-100 to-purple-100 rounded-xl p-8 border-2 border-indigo-200 text-center">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Unlock Premium Tier 🚀</h3>
+              <p className="text-gray-700 mb-2">Reach 85+ reputation to access Premium Tier tasks</p>
+              <p className="text-sm text-gray-600 mb-4">Premium Tier: 2-10 USDC per task (vs 0.5-2.0 in Standard Tier)</p>
+              <button disabled className="px-8 py-3 bg-gray-400 text-gray-600 font-bold rounded-lg cursor-not-allowed">
+                View Premium Tasks 🚀
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* BUYER VIEW */}
+        {activeTab === 'buyer' && (
+          <div>
+            {/* Feedback Verification Status */}
+            <div className="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-lg p-8 mb-12 border border-purple-500">
+              <h2 className="text-2xl font-bold text-white mb-6">
+                ✅ Feedback Verification Status
+              </h2>
+
+              <div className="bg-indigo-900 bg-opacity-50 rounded-lg p-4 mb-6 border border-indigo-400">
+                <p className="text-indigo-100 text-sm leading-relaxed">
+                  <strong>Why verify as a buyer?</strong> To maintain marketplace trust, we require buyers to have a proven track record before they can rate service providers. This ensures feedback updating the ERC-8004 registry comes from real, experienced users—not random accounts.
+                </p>
+              </div>
+
+              {/* Verification Progress */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-white font-semibold">Tasks Completed (Buyer)</span>
+                  <span className="text-2xl font-bold text-cyan-300">{ratedTasks.size || 0}/3</span>
+                </div>
+                <div className="w-full bg-gray-700 rounded-full h-4">
+                  <div 
+                    className="bg-gradient-to-r from-cyan-400 to-blue-400 h-4 rounded-full transition-all duration-300"
+                    style={{ width: `${(ratedTasks.size / 3) * 100}%` }}
+                  />
+                </div>
+                <p className="text-indigo-200 text-sm">
+                  {ratedTasks.size >= 3 
+                    ? '✓ Verified Reviewer — You can now submit feedback to ERC-8004' 
+                    : `Complete ${3 - ratedTasks.size} more task${3 - ratedTasks.size === 1 ? '' : 's'} to verify`}
+                </p>
+              </div>
+            </div>
+
+            {/* Mock Tasks for Buyer */}
+            <div className="space-y-4">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Available Agents</h3>
+              {mockTasks.map((task) => (
+                <div 
+                  key={task.id}
+                  className="bg-white rounded-lg shadow-md border border-gray-100 overflow-hidden"
+                >
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h4 className="text-lg font-bold text-gray-900">{task.name}</h4>
+                        <p className="text-gray-600 text-sm">Agent ID: 0x...{Math.random().toString(16).slice(2, 8).toUpperCase()}</p>
+                      </div>
+                      <span className="text-lg font-bold text-blue-600">{task.payout} USDC</span>
+                    </div>
+
+                    {completedTaskId !== task.id && (
+                      <button
+                        onClick={() => handleCompleteTask(task.id)}
+                        className="w-full px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition"
+                      >
+                        {ratedTasks.has(task.id) ? '✓ Already Rated' : 'Hire Agent for Task'}
+                      </button>
+                    )}
+
+                    {/* Rating Interface */}
+                    {completedTaskId === task.id && !ratedTasks.has(task.id) && (
+                      <div className="border-t-2 border-gray-200 pt-6 mt-6 bg-blue-50 -mx-6 -mb-6 px-6 py-6">
+                        <p className="text-gray-700 font-semibold mb-6 text-center">Rate this agent:</p>
+                        
+                        <div className="mb-8 flex justify-center">
+                          <StarRating onRate={handleRateTask} />
+                        </div>
+
+                        {selectedRating && (
+                          <div className="bg-white rounded-lg p-6 space-y-4 border-2 border-green-200">
+                            <div className="text-center">
+                              <div className="text-3xl mb-2">✓</div>
+                              <p className="font-bold text-gray-900 text-lg">
+                                Task completed with {selectedRating}★ rating
+                              </p>
+                            </div>
+
+                            <div className="bg-gray-50 rounded-lg p-4 text-center space-y-3">
+                              <div>
+                                <p className="text-sm text-gray-600">Feedback will be submitted to ERC-8004</p>
+                                <p className="text-lg font-bold text-blue-600">
+                                  {selectedRating}★ = value:{convertRatingToValue(selectedRating)}, decimals:1
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={handleCloseFeedback}
+                              className="w-full px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg transition"
+                            >
+                              Close & Next Task
+                            </button>
+                          </div>
+                        )}
+
+                        {!selectedRating && (
+                          <p className="text-center text-gray-500 text-sm">
+                            Select a star rating above to continue
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   )

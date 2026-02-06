@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const AgentScoreContract = require('./contracts/agentScore');
 const SkillBondContract = require('./contracts/skillBond');
+const ERC8004Registry = require('./contracts/erc8004Registry');
 
 const app = express();
 const PORT = process.env.API_PORT || 3001;
@@ -13,9 +14,28 @@ const PORT = process.env.API_PORT || 3001;
 const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://sepolia.base.org';
 const AGENT_SCORE_ADDRESS = process.env.AGENT_SCORE_ADDRESS || '0xD3441abcC71a1585B26D5d3A55ccA3704B007568';
 const SKILL_BOND_ADDRESS = process.env.SKILL_BOND_ADDRESS || '0xbfE51B3eAbB03bF4937020d169ab25FafF9dCcbe';
+const ERC8004_IDENTITY_ADDRESS = process.env.ERC8004_IDENTITY || '0x8004A818BFB912233c491871b3d84c89A494BD9e';
+const ERC8004_REPUTATION_ADDRESS = process.env.ERC8004_REPUTATION || '0x8004B663056A597Dffe9eCcC1965A193B7388713';
 
 const agentScore = new AgentScoreContract(AGENT_SCORE_ADDRESS, RPC_URL);
 const skillBond = new SkillBondContract(SKILL_BOND_ADDRESS, RPC_URL);
+const erc8004 = new ERC8004Registry(ERC8004_IDENTITY_ADDRESS, ERC8004_REPUTATION_ADDRESS, RPC_URL);
+
+// Fallback in-memory registry for when contract is not deployed
+const reputationFallback = {};
+
+function getReputationSync(agentAddress) {
+  const key = agentAddress.toLowerCase();
+  if (!reputationFallback[key]) {
+    reputationFallback[key] = 50; // Bootstrap at 50/100
+  }
+  return reputationFallback[key];
+}
+
+function setReputationSync(agentAddress, score) {
+  const key = agentAddress.toLowerCase();
+  reputationFallback[key] = Math.max(0, Math.min(100, score)); // Clamp 0-100
+}
 
 // Middleware
 app.use(cors());
@@ -56,7 +76,7 @@ app.get('/contracts/info', async (req, res) => {
 });
 
 /**
- * GET /agents/:address - Get agent status (both AgentScore + SkillBond)
+ * GET /agents/:address - Get agent status (both AgentScore + SkillBond + ERC-8004 reputation)
  */
 app.get('/agents/:address', async (req, res) => {
   const { address } = req.params;
@@ -64,15 +84,20 @@ app.get('/agents/:address', async (req, res) => {
   try {
     const agentScoreStatus = await agentScore.getAgentStatus(address);
     const skillBondStatus = await skillBond.getAgentStatus(address);
+    const erc8004Status = await erc8004.getAgent(address);
     
     res.json({
       agent: address,
+      reputation: erc8004Status.reputation, // ERC-8004 reputation score (0-100)
+      completedTasks: erc8004Status.completedTasks,
+      uptimePercentage: erc8004Status.uptimePercentage,
       agentScore: agentScoreStatus,
       skillBond: skillBondStatus,
       earnings: '0.00 USDC', // Mock for now, would be calculated from task history
       averageRating: 0
     });
   } catch (error) {
+    console.error('Error getting agent status:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -291,6 +316,89 @@ app.post('/tasks/:id/complete', async (req, res) => {
       message: `Task completed. Agent rated ${rating}/100.`
     });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /erc8004/registered/:address - Check if agent is registered with ERC-8004
+ */
+app.get('/erc8004/registered/:address', async (req, res) => {
+  const { address } = req.params;
+  try {
+    const agentId = await erc8004.getAgentId(address);
+    const isRegistered = agentId > 0;
+    res.json({
+      agent: address,
+      isRegistered: isRegistered,
+      agentId: isRegistered ? agentId : null
+    });
+  } catch (error) {
+    console.error('Error checking ERC-8004 registration:', error.message);
+    res.json({
+      agent: address,
+      isRegistered: false,
+      agentId: null
+    });
+  }
+});
+
+/**
+ * GET /reputation/:address - Get agent's reputation score (ERC-8004)
+ */
+app.get('/reputation/:address', async (req, res) => {
+  const { address } = req.params;
+  try {
+    const reputation = await erc8004.getReputation(address);
+    res.json({
+      agent: address,
+      reputation: reputation,
+      maxReputation: 100,
+      source: 'ERC8004'
+    });
+  } catch (error) {
+    console.error('Error getting reputation:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * PUT /reputation/:address - Update agent's reputation (for agent loop, via ERC-8004)
+ * Body: { score } or { increment }
+ */
+app.put('/reputation/:address', async (req, res) => {
+  const { address } = req.params;
+  const { score, increment } = req.body;
+  
+  try {
+    let newReputation;
+    const current = await erc8004.getReputation(address);
+    
+    if (score !== undefined) {
+      newReputation = score;
+    } else if (increment !== undefined) {
+      newReputation = current + increment;
+    } else {
+      return res.status(400).json({ error: 'score or increment required' });
+    }
+    
+    // Clamp to 0-100
+    newReputation = Math.max(0, Math.min(100, newReputation));
+    
+    // In production, this would call erc8004.rateAgent(address, newReputation)
+    // For now, we rate it with the new score
+    await erc8004.rateAgent(address, newReputation);
+    
+    res.json({
+      success: true,
+      agent: address,
+      previousReputation: current,
+      newReputation: newReputation,
+      message: `Reputation updated to ${newReputation}/100`,
+      source: 'ERC8004'
+    });
+  } catch (error) {
+    console.error('Error updating reputation:', error.message);
     res.status(500).json({ error: error.message });
   }
 });

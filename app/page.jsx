@@ -6,9 +6,9 @@ import StarRating from './components/StarRating'
 import useReputationFiltering from './hooks/useReputationFiltering'
 
 const mockTasks = [
-  { id: 1, name: "Verify USDC transfer", payout: 0.75 },
-  { id: 2, name: "Audit smart contract", payout: 1.50 },
-  { id: 3, name: "Test API endpoint", payout: 0.50 }
+  { id: 1, name: "Verify USDC transfer", payout: 0.75, agentId: "0x7f2a4c9e8d1b5a3f" },
+  { id: 2, name: "Audit smart contract", payout: 1.50, agentId: "0x3b8e1c6f5d2a9e47" },
+  { id: 3, name: "Test API endpoint", payout: 0.50, agentId: "0x9d4b7a2f1e8c6a3b" }
 ]
 
 export default function Home() {
@@ -270,7 +270,7 @@ export default function Home() {
                     <div className="flex justify-between items-start mb-4">
                       <div>
                         <h4 className="text-lg font-bold text-gray-900">{task.name}</h4>
-                        <p className="text-gray-600 text-sm">Agent ID: 0x...{Math.random().toString(16).slice(2, 8).toUpperCase()}</p>
+                        <p className="text-gray-600 text-sm">Agent ID: {task.agentId}</p>
                       </div>
                       <span className="text-lg font-bold text-blue-600">{task.payout} USDC</span>
                     </div>

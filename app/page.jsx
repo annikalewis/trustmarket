@@ -129,6 +129,23 @@ export default function Home() {
     return mapping[stars] || 0
   }
 
+  const getUSDCPayout = (stars) => {
+    // Standard tier: $0.50-$2.00 USDC based on rating
+    // 5 stars = $2.00, 4 stars = $1.50, 3 stars = $1.00, 2 stars = $0.50
+    const payouts = {
+      5: 2.00,
+      4.5: 1.75,
+      4: 1.50,
+      3.5: 1.25,
+      3: 1.00,
+      2.5: 0.75,
+      2: 0.50,
+      1.5: 0.25,
+      1: 0.10
+    }
+    return payouts[stars] || 0.50
+  }
+
   const handleCompleteTask = (taskId) => {
     console.log('🎯 Demo task clicked:', taskId)
     setCompletedTaskId(taskId)
@@ -443,7 +460,7 @@ export default function Home() {
                         </div>
 
                         {selectedRating && (
-                          <div className="bg-white rounded-lg p-6 space-y-4 border-2 border-green-200">
+                          <div className="bg-white rounded-lg p-6 space-y-6 border-2 border-green-200">
                             <div className="text-center">
                               <div className="text-3xl mb-2">✓</div>
                               <p className="font-bold text-gray-900 text-lg">
@@ -451,12 +468,26 @@ export default function Home() {
                               </p>
                             </div>
 
-                            <div className="bg-gray-50 rounded-lg p-4 text-center space-y-3">
-                              <div>
-                                <p className="text-sm text-gray-600">Feedback will be submitted to ERC-8004</p>
-                                <p className="text-lg font-bold text-blue-600">
-                                  {selectedRating}★ = value:{convertRatingToValue(selectedRating)}, decimals:1
-                                </p>
+                            <div className="bg-blue-50 rounded-lg p-4 text-center space-y-3 border border-blue-200">
+                              <p className="text-sm text-gray-600">Reputation feedback submitted to ERC-8004</p>
+                              <p className="text-lg font-bold text-blue-600">
+                                {selectedRating}★ = +{convertRatingToValue(selectedRating)} reputation
+                              </p>
+                            </div>
+
+                            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-6 text-center border-2 border-green-300 space-y-4">
+                              <div className="flex items-center justify-center gap-2 text-2xl font-bold">
+                                <span className="text-gray-900">You</span>
+                                <span className="text-xl">→</span>
+                                <span className="text-emerald-600">💰 {getUSDCPayout(selectedRating).toFixed(2)} USDC</span>
+                                <span className="text-xl">→</span>
+                                <span className="text-gray-900">Agent</span>
+                              </div>
+                              <p className="text-sm text-gray-600">
+                                Agent receives USDC payout in Phase 2 (escrow contract deployment)
+                              </p>
+                              <div className="text-xs text-emerald-700 font-semibold">
+                                💚 Phase 2: Escrow + Auto-payout
                               </div>
                             </div>
 

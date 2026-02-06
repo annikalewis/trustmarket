@@ -243,7 +243,7 @@ export const useMarketplaceContract = () => {
 
       try {
         // Use official ERC-8004 ReputationRegistry on Base Mainnet
-        const provider = new ethers.JsonRpcProvider('https://mainnet.base.org');
+        const provider = new ethers.JsonRpcProvider('https://base.meowrpc.com');
         const registryContract = new ethers.Contract(
           ERC8004_REPUTATION_REGISTRY,
           [
@@ -344,7 +344,7 @@ export const useMarketplaceContract = () => {
     if (!walletAddress) return [];
 
     try {
-      const provider = new ethers.JsonRpcProvider('https://mainnet.base.org');
+      const provider = new ethers.JsonRpcProvider('https://base.meowrpc.com');
       const identityRegistry = new ethers.Contract(
         IDENTITY_REGISTRY,
         IDENTITY_REGISTRY_ABI,
@@ -387,7 +387,7 @@ export const useMarketplaceContract = () => {
 
     try {
       // Use official ERC-8004 IdentityRegistry on Base Mainnet
-      const provider = new ethers.JsonRpcProvider('https://mainnet.base.org');
+      const provider = new ethers.JsonRpcProvider('https://base.meowrpc.com');
       const identityRegistry = new ethers.Contract(
         IDENTITY_REGISTRY,
         IDENTITY_REGISTRY_ABI,

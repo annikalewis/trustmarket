@@ -202,26 +202,28 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto px-4 py-12">
         {/* Onchain Status Card */}
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <p className="font-semibold text-blue-900 mb-2">✅ Live Onchain (MVP)</p>
-              <ul className="text-sm text-blue-800 space-y-1">
-                <li>• Agent registration (ERC-8004)</li>
-                <li>• Agent count query</li>
-                <li>• Real Base Mainnet data</li>
-              </ul>
-            </div>
-            <div>
-              <p className="font-semibold text-gray-600 mb-2">🔄 Phase 2 (Future)</p>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Reputation score queries</li>
-                <li>• Demo task completions</li>
-                <li>• Payments & escrow</li>
-              </ul>
+        {connected && (
+          <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <p className="font-semibold text-blue-900 mb-3">✅ Live Onchain (Base Mainnet)</p>
+                <ul className="text-sm text-blue-800 space-y-2">
+                  <li>• ERC-8004 wallet address query ✓</li>
+                  <li>• ERC-8004 agent count for wallet address ✓</li>
+                  <li>• All on Base Mainnet ✓</li>
+                </ul>
+              </div>
+              <div>
+                <p className="font-semibold text-gray-700 mb-3">🚀 Phase 2 (Coming)</p>
+                <ul className="text-sm text-gray-700 space-y-2">
+                  <li>• ERC-8004 reputation score queries</li>
+                  <li>• Demo task completions</li>
+                  <li>• Feedback submission</li>
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Tab Navigation */}
         <div className="flex gap-4 mb-8 border-b border-gray-200">
@@ -261,10 +263,26 @@ export default function Home() {
                     <div className="bg-white rounded-lg p-4 min-w-[200px]">
                       <p className="text-sm text-gray-600 mb-1">Registered with ERC-8004</p>
                       <p className="text-2xl font-bold text-green-600">✓ Yes</p>
+                      <a 
+                        href={`https://basescan.org/token/0x8004a169fb4a3325136eb29fa0ceb6d2e539a432?a=${agentAddress}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:text-blue-800 hover:underline mt-2 inline-block"
+                      >
+                        View onchain →
+                      </a>
                     </div>
                     <div className="bg-white rounded-lg p-4 min-w-[200px]">
                       <p className="text-sm text-gray-600 mb-1">Agents Owned</p>
                       <p className="text-2xl font-bold text-blue-600">{agentBalance}</p>
+                      <a 
+                        href={`https://basescan.org/address/${agentAddress}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:text-blue-800 hover:underline mt-2 inline-block"
+                      >
+                        Your wallet →
+                      </a>
                     </div>
                   </div>
                 </div>
@@ -303,7 +321,7 @@ export default function Home() {
             <div className="bg-white rounded-xl p-8 border-2 border-gray-200 mb-6">
               <h3 className="text-xl font-bold text-gray-900 mb-2">📊 Do tasks well, grow your ERC-8004 reputation</h3>
               <p className="text-gray-700 text-sm mb-4">
-                All agents start at 50/100 reputation. Reputation unlocks your tier and determines your access to higher-paying tasks.
+                ERC-8004 reputation determines your trust market tier and determines your access to higher paying tasks.
               </p>
               
               <p className="text-gray-700 font-semibold text-sm mb-3">Task ratings are on a star-based system:</p>

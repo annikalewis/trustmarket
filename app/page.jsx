@@ -130,6 +130,7 @@ export default function Home() {
   }
 
   const handleCompleteTask = (taskId) => {
+    console.log('🎯 Demo task clicked:', taskId)
     setCompletedTaskId(taskId)
     setSelectedRating(null)
   }

@@ -43,7 +43,8 @@ export default function Home() {
           if (accounts.length > 0) {
             setConnected(true)
             setAgentAddress(accounts[0])
-            setIsERC8004Registered(true)
+            // Don't assume registration — check it
+            setIsERC8004Registered(false)
           }
         } catch (err) {
           console.error('Error checking wallet:', err)
@@ -62,7 +63,8 @@ export default function Home() {
         if (accounts.length > 0) {
           setConnected(true)
           setAgentAddress(accounts[0])
-          setIsERC8004Registered(true)
+          // Don't assume registration — check it
+          setIsERC8004Registered(false)
         }
       } catch (err) {
         console.error('Error connecting wallet:', err)

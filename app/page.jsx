@@ -205,7 +205,7 @@ export default function Home() {
                       <p className="text-2xl font-bold text-green-600">✓ Yes</p>
                     </div>
                     <div className="bg-white rounded-lg p-4 min-w-[200px]">
-                      <p className="text-sm text-gray-600 mb-1">Reputation</p>
+                      <p className="text-sm text-gray-600 mb-1">Reputation Score</p>
                       <p className="text-2xl font-bold text-blue-600">{agentRepScore ?? '—'}/100</p>
                     </div>
                   </div>
@@ -218,7 +218,7 @@ export default function Home() {
                       <p className="text-2xl font-bold text-red-600">✗ No</p>
                     </div>
                     <div className="bg-white rounded-lg p-4 min-w-[200px]">
-                      <p className="text-sm text-gray-600 mb-1">Reputation</p>
+                      <p className="text-sm text-gray-600 mb-1">Reputation Score</p>
                       <p className="text-2xl font-bold text-gray-500">Not Applicable</p>
                     </div>
                   </div>

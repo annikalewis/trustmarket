@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { ethers } from 'ethers'
 import { useAgent, useTiers, useTasks } from './hooks/useAgent'
 import useMarketplaceContract from './hooks/useMarketplaceContract'
 import StarRating from './components/StarRating'
@@ -16,11 +17,11 @@ export default function Home() {
   const [connected, setConnected] = useState(false)
   const [agentAddress, setAgentAddress] = useState(null)
   const [isERC8004Registered, setIsERC8004Registered] = useState(null)
-  const [allAgents, setAllAgents] = useState([])
+  const [agentBalance, setAgentBalance] = useState(0)
   const [activeTab, setActiveTab] = useState('serviceProvider')
   const { status, loading } = useAgent(agentAddress)
   const { tiers } = useTiers()
-  const { isAgentRegistered, getAllAgents } = useMarketplaceContract()
+  const { isAgentRegistered } = useMarketplaceContract()
   
   const [completedTaskId, setCompletedTaskId] = useState(null)
   const [selectedRating, setSelectedRating] = useState(null)
@@ -40,17 +41,31 @@ export default function Home() {
           setIsERC8004Registered(registered)
           
           if (registered) {
-            // Fetch all agents owned by this wallet
-            const agents = await getAllAgents(agentAddress)
-            console.log('🤖 All agents:', agents)
-            setAllAgents(agents)
+            // Get the agent balance (number of agents owned)
+            const provider = new ethers.JsonRpcProvider('https://base.meowrpc.com')
+            const identityRegistry = new ethers.Contract(
+              '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432',
+              [
+                {
+                  'inputs': [{'internalType': 'address', 'name': 'owner', 'type': 'address'}],
+                  'name': 'balanceOf',
+                  'outputs': [{'internalType': 'uint256', 'name': '', 'type': 'uint256'}],
+                  'stateMutability': 'view',
+                  'type': 'function'
+                }
+              ],
+              provider
+            )
+            const balance = await identityRegistry.balanceOf(agentAddress)
+            console.log('🤖 Agent balance:', Number(balance))
+            setAgentBalance(Number(balance))
           } else {
-            setAllAgents([])
+            setAgentBalance(0)
           }
         } catch (err) {
           console.error('❌ Error checking ERC-8004 registration:', err)
           setIsERC8004Registered(false)
-          setAllAgents([])
+          setAgentBalance(0)
         }
       }
     }
@@ -104,7 +119,7 @@ export default function Home() {
     setConnected(false)
     setAgentAddress(null)
     setIsERC8004Registered(null)
-    setAllAgents([])
+    setAgentBalance(0)
   }
 
   const convertRatingToValue = (stars) => {
@@ -226,25 +241,9 @@ export default function Home() {
                     </div>
                     <div className="bg-white rounded-lg p-4 min-w-[200px]">
                       <p className="text-sm text-gray-600 mb-1">Agents Owned</p>
-                      <p className="text-2xl font-bold text-blue-600">{allAgents.length}</p>
+                      <p className="text-2xl font-bold text-blue-600">{agentBalance}</p>
                     </div>
                   </div>
-                  
-                  {allAgents.length > 0 && (
-                    <div className="bg-white rounded-lg p-4 space-y-2">
-                      <p className="text-sm font-semibold text-gray-700">Your Agents:</p>
-                      {allAgents.map((agent, idx) => (
-                        <div key={idx} className="flex items-center justify-between bg-gray-50 p-3 rounded border border-gray-200">
-                          <span className="text-sm text-gray-600">
-                            <span className="font-semibold">Token #{agent.tokenId}</span>
-                          </span>
-                          <span className="text-xs text-gray-500 font-mono">
-                            {agent.agentAddress.slice(0, 6)}...{agent.agentAddress.slice(-4)}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               ) : isERC8004Registered === false ? (
                 <div className="space-y-4">
